@@ -2,24 +2,27 @@ pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-contract DistributedExchange is IDistributedExchange {
+contract OrderBookSimpleTree is IOrderBook {
     using SafeERC20 for IERC20;
 
-    struct OrderNode {
+    struct Order {
         address payable owner;
         uint32 amount;
-        uint256 nextOrderNodeId;
+        uint256 nextOrderId;
     }
 
-    struct PriceNode {
-        uint256 prevPrice;
-        uint256 nextPrice;
-        uint256 firstOrderNodeId;
+    struct Price {
+        uint256 parentPrice;
+        uint256 leftPrice;
+        uint256 rightPrice;
+        uint256 headOrderId;
     }
 
-    mapping(address => mapping(uint256 => PriceNode)) internal bids; // securityContract => (price => PriceNode))
-    mapping(address => mapping(uint256 => PriceNode)) internal asks; // securityContract => (price => PriceNode))
-    mapping(uint256 => OrderNode) internal orders; // orderId => Order
+    mapping(address => mapping(uint256 => Price)) internal sellPriceNodes; // securityContract => (price => Price))
+    mapping(address => mapping(uint256 => Price)) internal buyPriceNodes; // securityContract => (price => Price))
+    mapping(uint256 => Order) internal orders; // orderId => Order
+    uint256 lowestSell internal;
+    uint256 highestBuy internal;
 
     constructor() {
         // TODO: Initialize depo contract
@@ -28,23 +31,23 @@ contract DistributedExchange is IDistributedExchange {
     // TODO: Cancel order
     // TODO: Approved orders
 
-    function placeLimitBid(
+    function placeSellOrder (
         address securityContractAddr,
         uint32 amount,
         uint256 floorPrice
     ) external virtual override returns (bool) {
-        _bid(payable(msg.sender), securityContractAddr, amount, floorPrice);
+        _placeSellOrder(payable(msg.sender), securityContractAddr, amount, floorPrice);
     }
 
-    function placeLimitAsk(
+    function placeBuyOrder (
         address securityContractAddr
         uint32 amount,
         uint256 ceilingPrice
     ) external payable virtual override returns (bool) {
-        _ask(payable(msg.sender), securityContractAddr, amount, ceilingPrice);
+        _placeBuyOrder(payable(msg.sender), securityContractAddr, amount, ceilingPrice);
     }
 
-    function _placeLimitBid(
+    function _placeSellOrder (
         address payable from,
         address securityContractAddr,
         uint32 amount,
@@ -56,15 +59,14 @@ contract DistributedExchange is IDistributedExchange {
         SafeERC20 securityContract = SafeERC20(securityContractAddr);
         securityContract.safeTransferFrom(from, address(this), amount);
 
-        // Chainlink call. It rturns OrderNodeId for asks and OrderNodeId for inserting in bids
-        // Remove nodes (from maps too)
+        // Remove buys
         // Close positions (maybe before remove?)
         //   Send securities to asker
         //   Send money to bidder
-        // Check second OrderNodeId and insert rest bids
+        // Add rest sells
     }
 
-    function _placeLimitAsk(
+    function _placeBuyOrder (
         address from,
         address securityContractAddr,
         uint32 amount,
@@ -75,11 +77,10 @@ contract DistributedExchange is IDistributedExchange {
 
         require(msg.value == (ceilingPrice * amount), "Incorrect fund sent.")
 
-        // Chainlink call. It rturns OrderNodeId for bids and OrderNodeId for inserting in asks
-        // Remove nodes (from maps too)
+        // Remove sells
         // Close positions (maybe before remove?)
         //   Send securities to asker
         //   Send money to bidder
-        // Check second OrderNodeId and insert rest asks
+        // Add rest buys
     }
 }

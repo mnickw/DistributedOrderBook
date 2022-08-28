@@ -1,0 +1,18 @@
+    struct Order {
+        address payable owner;
+        uint32 amount;
+        uint256 nextOrderId;
+    }
+
+    struct Price {
+        uint256 parentPrice;
+        uint256 leftPrice;
+        uint256 rightPrice;
+        uint256 headOrderId;
+    }
+
+    mapping(address => mapping(uint256 => Price)) internal bids; // securityContract => (price => Price))
+    mapping(address => mapping(uint256 => Price)) internal asks; // securityContract => (price => Price))
+    mapping(uint256 => Order) internal orders; // orderId => Order
+    uint256 lowestSell internal;
+    uint256 highestBuy internal;

@@ -1,13 +1,13 @@
 pragma solidity ^0.8.2;
 
-interface IDistributedExchange {
-    function placeLimitBid(
+interface IOrderBook {
+    function placeSellOrder(
         address securityContractAddr,
         uint32 amount,
         uint256 floorPrice
     ) external virtual override returns (bool);
 
-    function placeLimitAsk(
+    function placeBuyOrder(
         address securityContractAddr
         uint32 amount,
         uint256 ceilingPrice
