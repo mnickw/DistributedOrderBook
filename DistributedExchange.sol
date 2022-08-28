@@ -1,11 +1,12 @@
 pragma solidity ^0.8.2;
 
-import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-contract DistributedExchange is IDistributedExchange, Context {
+contract DistributedExchange is IDistributedExchange {
+    using SafeERC20 for IERC20;
 
     struct OrderNode {
-        address owner;
+        address payable owner;
         uint32 amount;
         uint256 nextOrderNodeId;
     }
@@ -22,7 +23,6 @@ contract DistributedExchange is IDistributedExchange, Context {
 
     constructor() {
         // TODO: Initialize depo contract
-        // Maybe some code to let available `transferTo` to this contract?
     }
 
     // TODO: Cancel order
@@ -33,19 +33,19 @@ contract DistributedExchange is IDistributedExchange, Context {
         uint32 amount,
         uint256 floorPrice
     ) external virtual override returns (bool) {
-        _bid(_msgSender(), securityContractAddr, amount, floorPrice);
+        _bid(payable(msg.sender), securityContractAddr, amount, floorPrice);
     }
 
     function placeLimitAsk(
         address securityContractAddr
         uint32 amount,
         uint256 ceilingPrice
-    ) external virtual override returns (bool) {
-        _ask(_msgSender(), securityContractAddr, amount, ceilingPrice);
+    ) external payable virtual override returns (bool) {
+        _ask(payable(msg.sender), securityContractAddr, amount, ceilingPrice);
     }
 
     function _placeLimitBid(
-        address from,
+        address payable from,
         address securityContractAddr,
         uint32 amount,
         uint256 floorPrice
@@ -53,8 +53,8 @@ contract DistributedExchange is IDistributedExchange, Context {
         // TODO: Check by depo that `securityContractAddr` is valid
         // TODO: Check by depo that `from` is valid
 
-        // Check if `from` has enough securities.
-        // Lock them by making {transferTo} to this contract
+        SafeERC20 securityContract = SafeERC20(securityContractAddr);
+        securityContract.safeTransferFrom(from, address(this), amount);
 
         // Chainlink call. It rturns OrderNodeId for asks and OrderNodeId for inserting in bids
         // Remove nodes (from maps too)
@@ -73,8 +73,7 @@ contract DistributedExchange is IDistributedExchange, Context {
         // TODO: Check by depo that `securityContractAddr` is valid
         // TODO: Check by depo that `from` is valid
 
-        // Check if `from` has enough money.
-        // Lock money by sending them to this contract
+        require(msg.value == (ceilingPrice * amount), "Incorrect fund sent.")
 
         // Chainlink call. It rturns OrderNodeId for bids and OrderNodeId for inserting in asks
         // Remove nodes (from maps too)

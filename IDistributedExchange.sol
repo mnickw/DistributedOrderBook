@@ -11,5 +11,5 @@ interface IDistributedExchange {
         address securityContractAddr
         uint32 amount,
         uint256 ceilingPrice
-    ) external virtual override returns (bool);
+    ) external payable virtual override returns (bool);
 }
