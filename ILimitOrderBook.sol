@@ -1,6 +1,6 @@
 pragma solidity ^0.8.2;
 
-interface IOrderBook {
+interface ILimitOrderBook {
     function placeSellOrder(
         address securityContractAddr,
         uint32 amount,

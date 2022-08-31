@@ -1,18 +1,23 @@
     struct Order {
-        address payable owner;
         uint32 amount;
-        uint256 nextOrderId;
+        address nextOrderOwner;
     }
 
     struct Price {
         uint256 parentPrice;
         uint256 leftPrice;
         uint256 rightPrice;
-        uint256 headOrderId;
+        uint256 headOrderOwner;
     }
 
-    mapping(address => mapping(uint256 => Price)) internal bids; // securityContract => (price => Price))
-    mapping(address => mapping(uint256 => Price)) internal asks; // securityContract => (price => Price))
-    mapping(uint256 => Order) internal orders; // orderId => Order
+    struct PriceWithOrders {
+        Price priceNode;
+        mapping(address => Order) orders; // owner => Order
+    }
+
+    mapping(address => mapping(uint256 => PriceWithOrders)) internal sells; // securityContract => (price => PriceWithOrders))
+    mapping(address => mapping(uint256 => PriceWithOrders)) internal buys; // securityContract => (price => PriceWithOrders))
     uint256 lowestSell internal;
     uint256 highestBuy internal;
+
+// Need 2 check gas consumption nested maps vs abi.encode for key from several values
