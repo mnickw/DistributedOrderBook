@@ -7,13 +7,13 @@ interface IOrderBook {
     event ExecuteTrade (address indexed securityContractAddr, address indexed bidder, address indexed asker, uint32 amount, uint256 price);
     event DrawToOrderBook (address indexed securityContractAddr, address indexed owner, bool indexed isBidOrder, uint32 amount, uint256 price);
 
-    function placeAskOrder(
+    function placeLimitAskOrder(
         address securityContractAddr,
         uint32 amount,
         uint256 floorPrice
     ) external returns (PlaceOrderStatus);
 
-    function placeBidOrder(
+    function placeLimitBidOrder(
         address securityContractAddr,
         uint32 amount,
         uint256 ceilingPrice
