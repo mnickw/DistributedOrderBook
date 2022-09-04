@@ -29,8 +29,11 @@ contract OrderBookLinkedList is IOrderBook {
     uint256 internal highestBid;
     uint128 internal orderIdCounter;
 
-    constructor() {
+    IERC20 internal exchangeTokenContract;
+
+    constructor(address exchangeTokenContractAddr) {
         // TODO: Initialize depo contract
+        exchangeTokenContract = IERC20(exchangeTokenContractAddr);
     }
 
     // TODO: Cancel order
@@ -78,10 +81,7 @@ contract OrderBookLinkedList is IOrderBook {
         
         if (isBidOrder) {
             uint256 restMoney = orderPrice*amount - spentMoney - orderPrice*restAmount;
-            if (restMoney != 0) {
-                (bool sent, ) = from.call{value: restMoney}("");
-                require(sent, "Failed to send Ether");
-            }
+            if (restMoney != 0) exchangeTokenContract.safeTransfer(from, restMoney);
         }
 
         if (restAmount == 0) return PlaceOrderStatus.Filled;
@@ -143,8 +143,7 @@ contract OrderBookLinkedList is IOrderBook {
         uint32 amount,
         uint256 price
     ) internal virtual {
-        (bool sent, ) = asker.call{value: price*amount}("");
-        require(sent, "Failed to send Ether");
+        exchangeTokenContract.safeTransfer(asker, price*amount);
         IERC20 securityContract = IERC20(securityContractAddr);
         securityContract.safeTransfer(bidder, amount);
         emit ExecuteTrade(securityContractAddr, bidder, asker, amount, price);
