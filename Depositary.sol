@@ -11,7 +11,7 @@ contract Depositary is IDepositary, Ownable {
     function addSecurityContractValidationStatus (
         address securityContractAddr,
         SecurityContractValidationStatus status
-    ) public virtual onlyOwner returns (bool) {
+    ) external virtual override onlyOwner returns (bool) {
         securityContractValidations[securityContractAddr] = status;
         return true;
     }
@@ -19,17 +19,17 @@ contract Depositary is IDepositary, Ownable {
     function addUserValidationStatus (
         address userAddr,
         UserValidationStatus status
-    ) public virtual onlyOwner returns (bool) {
+    ) external virtual override onlyOwner returns (bool) {
         userValidationStatus[userAddr] = status;
         return true;
     }
 
     function getSecurityContractValidationStatus (address securityContractAddr)
-        public virtual view returns (SecurityContractValidationStatus) {
+        external virtual override view returns (SecurityContractValidationStatus) {
         return securityContractValidations[securityContractAddr];
     }
 
-    function getUserValidationStatus (address userAddr) public virtual view returns (UserValidationStatus) {
+    function getUserValidationStatus (address userAddr) external virtual override view returns (UserValidationStatus) {
         return userValidationStatus[userAddr];
     }
 }

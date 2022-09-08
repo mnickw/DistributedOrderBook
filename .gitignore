@@ -1,1 +1,7 @@
 test-some-shit.sol
+bin
+node_modules
+package-lock.json
+package.json
+
+./vs

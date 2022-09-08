@@ -84,7 +84,7 @@ contract OrderBookLinkedList is IOrderBook {
         uint32 amount,
         bool cancelIfActualAmountIsLess
     ) external virtual override returns (bool) {
-        return _cancelOrder(msg.sender, orderPrice, amount, cancelIfActualAmountIsLess);
+        return _cancelOrder(securityContractAddr, msg.sender, orderPrice, amount, cancelIfActualAmountIsLess);
     }
 
     // TODO: Maybe separate bids and asks funcs (not mapping) for gas opt
@@ -221,16 +221,16 @@ contract OrderBookLinkedList is IOrderBook {
         uint256 orderPrice,
         uint32 amount,
         bool cancelIfActualAmountIsLess
-    ) internal virtual override returns (bool) {
+    ) internal virtual returns (bool) {
         uint32 restAmount = amount;
         Price storage currentPrice = priceNodes[securityContractAddr][orderPrice];
         uint128 currentOrderId = currentPrice.headOrderId;
+        uint128 prevOrderId = 0;
         Order storage currentOrder;
-        Order storage prevOrder;
         while (currentOrderId != 0 && restAmount != 0) {
             currentOrder = orders[currentOrderId];
             if (currentOrder.owner != orderOwner) {
-                prevOrder = currentOrder;
+                prevOrderId = currentOrderId;
                 currentOrderId = currentOrder.nextOrderId; 
                 continue;
             }
@@ -246,7 +246,8 @@ contract OrderBookLinkedList is IOrderBook {
                 currentOrderId = currentPrice.headOrderId;
                 continue;
             }
-            if (prevOrder.amount != 0) {
+            if (prevOrderId != 0) {
+                Order storage prevOrder = orders[prevOrderId];
                 prevOrder.nextOrderId = currentOrder.nextOrderId;
                 delete orders[currentOrderId];
                 currentOrderId = prevOrder.nextOrderId;
