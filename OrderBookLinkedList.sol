@@ -3,6 +3,7 @@ pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./IOrderBook.sol";
+import "./IDepositary.sol";
 
 contract OrderBookLinkedList is IOrderBook {
     using SafeERC20 for IERC20;
@@ -30,10 +31,12 @@ contract OrderBookLinkedList is IOrderBook {
     uint128 internal orderIdCounter;
 
     IERC20 internal exchangeTokenContract;
+    IDepositary internal depositaryContract;
 
-    constructor(address exchangeTokenContractAddr) {
+    constructor(address exchangeTokenContractAddr, address depositaryAddr) {
         // TODO: Initialize depo contract
         exchangeTokenContract = IERC20(exchangeTokenContractAddr);
+        depositaryContract = IDepositary(depositaryAddr);
     }
 
     // TODO: Cancel order
@@ -63,8 +66,10 @@ contract OrderBookLinkedList is IOrderBook {
         uint32 amount,
         uint256 ceilingPrice
     ) external virtual override returns (PlaceOrderStatus) {
-        // TODO: Check by depo that `securityContractAddr` is valid
-        // TODO: Check by depo that `msg.sender` is valid
+        require(depositaryContract.getSecurityContractValidationStatus(securityContractAddr) == SecurityContractValidationStatus.Valid,
+            "Security contract address must be valid by depositary");
+        require(depositaryContract.getUserValidationStatus(msg.sender) == UserValidationStatus.Valid,
+            "Sender address must be valid by depositary");
         require(amount > 0, "Amount must be greater than 0");
         require(ceilingPrice > 0, "Ceiling price must be greater than 0");
         // TODO: Check overflow
@@ -253,5 +258,6 @@ contract OrderBookLinkedList is IOrderBook {
         }
         require(restAmount != amount, "No order to cancel");
         require(cancelIfActualAmountIsLess || restAmount == 0, "Actual amount is less");
+        return true;
     }
 }
