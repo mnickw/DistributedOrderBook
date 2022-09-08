@@ -18,4 +18,12 @@ interface IOrderBook {
         uint32 amount,
         uint256 ceilingPrice
     ) external payable returns (PlaceOrderStatus);
+
+    // Your app can calculate actual amount from events
+    function cancelLimitOrder (
+        address securityContractAddr,
+        uint256 orderPrice,
+        uint32 amount,
+        bool cancelIfActualAmountIsLess
+    ) external virtual override returns (bool); // returns true if cancellation happened
 }

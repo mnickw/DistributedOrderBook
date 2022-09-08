@@ -11,7 +11,7 @@ contract OrderBookLinkedList is IOrderBook {
     //       (non-solidity solutions: trees (b trees), sparsed arrays; solidity+chainlink/web2; solidity+batches)
 
     struct Order {
-        address payable owner;
+        address owner;
         uint32 amount;
         uint128 nextOrderId;
     }
@@ -40,60 +40,74 @@ contract OrderBookLinkedList is IOrderBook {
     // TODO: Approved order
     // TODO: Market order
 
+    // TODO: Replace code in internal method
     function placeLimitAskOrder (
         address securityContractAddr,
         uint32 amount,
         uint256 floorPrice
     ) external virtual override returns (PlaceOrderStatus) {
         // TODO: Check by depo that `securityContractAddr` is valid
-        // TODO: Check by depo that `from` is valid
-
+        // TODO: Check by depo that `msg.sender` is valid
+        require(amount > 0, "Amount must be greater than 0");
+        require(floorPrice > 0, "Floor price must be greater than 0");
         // TODO: Check overflow
         IERC20 securityContract = IERC20(securityContractAddr);
         securityContract.safeTransferFrom(msg.sender, address(this), amount);
 
-        return _placeOrder(payable(msg.sender), securityContractAddr, amount, floorPrice, false);
+        return _placeLimitOrder(msg.sender, securityContractAddr, amount, floorPrice, false);
     }
 
+    // TODO: Replace code to internal method
     function placeLimitBidOrder (
         address securityContractAddr,
         uint32 amount,
         uint256 ceilingPrice
-    ) external payable virtual override returns (PlaceOrderStatus) {
+    ) external virtual override returns (PlaceOrderStatus) {
         // TODO: Check by depo that `securityContractAddr` is valid
-        // TODO: Check by depo that `from` is valid
-
+        // TODO: Check by depo that `msg.sender` is valid
+        require(amount > 0, "Amount must be greater than 0");
+        require(ceilingPrice > 0, "Ceiling price must be greater than 0");
         // TODO: Check overflow
-        require(msg.value == (ceilingPrice * amount), "Incorrect fund sent.");
+        exchangeTokenContract.safeTransferFrom(msg.sender, address(this), ceilingPrice * amount);
 
-        return _placeOrder(payable(msg.sender), securityContractAddr, amount, ceilingPrice, true);
+        return _placeLimitOrder(msg.sender, securityContractAddr, amount, ceilingPrice, true);
+    }
+
+    function cancelLimitOrder (
+        address securityContractAddr,
+        uint256 orderPrice,
+        uint32 amount,
+        bool cancelIfActualAmountIsLess
+    ) external virtual override returns (bool) {
+        return _cancelOrder(msg.sender, orderPrice, amount, cancelIfActualAmountIsLess);
     }
 
     // TODO: Maybe separate bids and asks funcs (not mapping) for gas opt
-    function _placeOrder (
-        address payable from,
+    function _placeLimitOrder (
+        address orderOwner,
         address securityContractAddr,
         uint32 amount,
         uint256 orderPrice,
         bool isBidOrder
     ) internal virtual returns (PlaceOrderStatus) {
-        (uint32 restAmount, uint256 spentMoney) = _closePositionsForOrder(from, securityContractAddr, amount, orderPrice, isBidOrder);
+        (uint32 restAmount, uint256 spentMoney) = _closePositionsForOrder(orderOwner, securityContractAddr, amount, orderPrice, isBidOrder);
         
         if (isBidOrder) {
             uint256 restMoney = orderPrice*amount - spentMoney - orderPrice*restAmount;
-            if (restMoney != 0) exchangeTokenContract.safeTransfer(from, restMoney);
+            if (restMoney != 0) exchangeTokenContract.safeTransfer(orderOwner, restMoney);
         }
 
         if (restAmount == 0) return PlaceOrderStatus.Filled;
         PlaceOrderStatus result = restAmount == amount ? PlaceOrderStatus.PartiallyFilledAndPlaced : PlaceOrderStatus.PartiallyFilledAndPlaced;
 
-        _drawToOrderBook(from, securityContractAddr, amount, orderPrice, isBidOrder);
+        _drawToOrderBook(orderOwner, securityContractAddr, amount, orderPrice, isBidOrder);
 
         return result;
     }
 
+    // TODO: Don't close position if asker and bidder is same owner
     function _closePositionsForOrder (
-        address payable from,
+        address orderOwner,
         address securityContractAddr,
         uint32 amount,
         uint256 orderPrice,
@@ -106,7 +120,7 @@ contract OrderBookLinkedList is IOrderBook {
             while (amount != 0 && currentPriceNode.headOrderId != 0) {
                 uint128 currentOrderId = currentPriceNode.headOrderId;
                 Order storage currentOrder = orders[currentOrderId];
-                (address bidder, address payable asker) = isBidOrder ? (from, currentOrder.owner) : (currentOrder.owner, from);
+                (address bidder, address asker) = isBidOrder ? (orderOwner, currentOrder.owner) : (currentOrder.owner, orderOwner);
                 if (amount < currentOrder.amount) {
                     _executeTrade(securityContractAddr, bidder, asker, amount, currentPrice);
                     spentMoney += currentPrice*amount;
@@ -139,7 +153,7 @@ contract OrderBookLinkedList is IOrderBook {
     function _executeTrade (
         address securityContractAddr,
         address bidder,
-        address payable asker,
+        address asker,
         uint32 amount,
         uint256 price
     ) internal virtual {
@@ -150,7 +164,7 @@ contract OrderBookLinkedList is IOrderBook {
     }
 
     function _drawToOrderBook (
-        address payable from,
+        address orderOwner,
         address securityContractAddr,
         uint32 amount,
         uint256 orderPrice,
@@ -158,7 +172,7 @@ contract OrderBookLinkedList is IOrderBook {
     ) internal virtual {
         Order storage order = orders[++orderIdCounter];
         order.amount = amount;
-        order.owner = from;
+        order.owner = orderOwner;
         Price storage priceNode = priceNodes[securityContractAddr][orderPrice];
 
         if (priceNode.headOrderId != 0) {
@@ -183,7 +197,7 @@ contract OrderBookLinkedList is IOrderBook {
             else priceNodes[securityContractAddr][priceToPutAfter].nextPrice = orderPrice;
         }
         
-        emit DrawToOrderBook(securityContractAddr, from, isBidOrder, amount, orderPrice);
+        emit DrawToOrderBook(securityContractAddr, orderOwner, isBidOrder, amount, orderPrice);
     }
 
     function _priceToPutBeforeFits (
@@ -194,5 +208,50 @@ contract OrderBookLinkedList is IOrderBook {
         return priceToPutBefore == 0
             || (isBidOrder && priceToPutBefore < orderPrice)
             || (!isBidOrder && orderPrice < priceToPutBefore);
+    }
+
+    function _cancelOrder (
+        address securityContractAddr,
+        address orderOwner,
+        uint256 orderPrice,
+        uint32 amount,
+        bool cancelIfActualAmountIsLess
+    ) internal virtual override returns (bool) {
+        uint32 restAmount = amount;
+        Price storage currentPrice = priceNodes[securityContractAddr][orderPrice];
+        uint128 currentOrderId = currentPrice.headOrderId;
+        Order storage currentOrder;
+        Order storage prevOrder;
+        while (currentOrderId != 0 && restAmount != 0) {
+            currentOrder = orders[currentOrderId];
+            if (currentOrder.owner != orderOwner) {
+                prevOrder = currentOrder;
+                currentOrderId = currentOrder.nextOrderId; 
+                continue;
+            }
+            if (restAmount < currentOrder.amount) {
+                currentOrder.amount -= restAmount;
+                restAmount = 0;
+                break;
+            }
+            restAmount -= currentOrder.amount;
+            if (currentPrice.headOrderId == currentOrderId) {
+                currentPrice.headOrderId = currentOrder.nextOrderId;
+                delete orders[currentOrderId];
+                currentOrderId = currentPrice.headOrderId;
+                continue;
+            }
+            if (prevOrder.amount != 0) {
+                prevOrder.nextOrderId = currentOrder.nextOrderId;
+                delete orders[currentOrderId];
+                currentOrderId = prevOrder.nextOrderId;
+                continue;
+            }
+        }
+        if (currentPrice.headOrderId == 0) {
+            delete priceNodes[securityContractAddr][orderPrice];
+        }
+        require(restAmount != amount, "No order to cancel");
+        require(cancelIfActualAmountIsLess || restAmount == 0, "Actual amount is less");
     }
 }
