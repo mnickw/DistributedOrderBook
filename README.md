@@ -1,4 +1,6 @@
 ## Deployment
+Do `npm install`.
+
 Use [this guide](https://trufflesuite.com/guides/pet-shop/) as a reference. Check out the [Drizzle](https://trufflesuite.com/docs/drizzle/) framework also.
 
 If you want to create a token for security, create migrations/2_deploy_test_token.js (it's also gitignored) with the next code:
