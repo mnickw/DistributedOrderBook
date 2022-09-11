@@ -43,6 +43,14 @@ contract OrderBookLinkedList is IOrderBook {
     // TODO: Approved order
     // TODO: Market order
 
+    function getLowestLimitAskPrice () external view virtual override returns (uint256) {
+        return lowestAsk;
+    }
+
+    function getHighestLimitBidPrice () external view virtual override returns (uint256) {
+        return highestBid;
+    }
+
     // TODO: Replace code in internal method
     function placeLimitAskOrder (
         address securityContractAddr,

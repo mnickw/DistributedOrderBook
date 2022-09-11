@@ -7,6 +7,10 @@ interface IOrderBook {
     event ExecuteTrade (address indexed securityContractAddr, address indexed bidder, address indexed asker, uint32 amount, uint256 price);
     event DrawToOrderBook (address indexed securityContractAddr, address indexed owner, bool indexed isBidOrder, uint32 amount, uint256 price);
 
+    function getLowestLimitAskPrice () external view returns (uint256);
+
+    function getHighestLimitBidPrice () external view returns (uint256);
+
     function placeLimitAskOrder(
         address securityContractAddr,
         uint32 amount,
