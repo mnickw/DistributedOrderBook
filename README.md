@@ -3,7 +3,7 @@ Do `npm install` in the cloned directory.
 
 This project supports both Truffle and Hardhat, but tests are written for Hardhat. Choose whatever you want.
 
-For frontend development with Hardhat use [this guide]() as a reference.
+For frontend development with Hardhat use [this guide](https://hardhat.org/tutorial/boilerplate-project) as a reference.
 
 For frontend development with Truffle use [this guide](https://trufflesuite.com/guides/pet-shop/) as a reference. Check out the [Drizzle](https://trufflesuite.com/docs/drizzle/) framework also.
 
