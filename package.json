@@ -3,6 +3,7 @@
     "@openzeppelin/contracts": "^4.7.3"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
     "ganache": "^7.4.3",
     "hardhat": "^2.11.1",
     "truffle": "^5.5.29"

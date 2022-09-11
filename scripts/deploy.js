@@ -14,7 +14,7 @@ async function main() {
   const depositary = await Depositary.deploy();
   await depositary.deployed();
   const OrderBookLinkedList = await hre.ethers.getContractFactory("OrderBookLinkedList");
-  const orderBookLinkedList = await Lock.deploy(exchangeToken.address, depositary.address);
+  const orderBookLinkedList = await OrderBookLinkedList.deploy(exchangeToken.address, depositary.address);
   await orderBookLinkedList.deployed();
 }
 
