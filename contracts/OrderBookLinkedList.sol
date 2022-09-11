@@ -127,6 +127,7 @@ contract OrderBookLinkedList is IOrderBook {
         bool isBidOrder
     ) internal virtual returns (uint32, uint256) { // returns rest amount to draw to order book and spent money for further calculating rest for bidder orders
         uint256 spentMoney = 0;
+        // TODO: (edgePriceEvent) uint256 oldEdgePrice = isBidOrder ? lowestAsk : highestBid;
         while (amount != 0 && _orderIntersectionExists(orderPrice, isBidOrder)) {
             uint256 currentPrice = isBidOrder ? lowestAsk : highestBid;
             Price storage currentPriceNode = priceNodes[securityContractAddr][currentPrice];
@@ -138,6 +139,7 @@ contract OrderBookLinkedList is IOrderBook {
                     _executeTrade(securityContractAddr, bidder, asker, amount, currentPrice);
                     spentMoney += currentPrice*amount;
                     currentOrder.amount -= amount;
+                    // TODO: (edgePriceEvent) _emitEdgePriceChangeEventIfNeeded(isBidOrder, oldEdgePrice);
                     return (0, spentMoney);
                 }
                 _executeTrade(securityContractAddr, bidder, asker, currentOrder.amount, currentPrice);
@@ -152,6 +154,7 @@ contract OrderBookLinkedList is IOrderBook {
                 delete priceNodes[securityContractAddr][currentPrice];
             }
         }
+        // TODO: (edgePriceEvent) _emitEdgePriceChangeEventIfNeeded(isBidOrder, oldEdgePrice);
         return (amount, spentMoney);
     }
 
@@ -175,6 +178,16 @@ contract OrderBookLinkedList is IOrderBook {
         securityContract.safeTransfer(bidder, amount);
         emit ExecuteTrade(securityContractAddr, bidder, asker, amount, price);
     }
+
+    // TODO: (edgePriceEvent) 
+    // function _emitEdgePriceChangeEventIfNeeded (
+    //     bool isBidOrder,
+    //     uint256 oldEdgePrice) internal virtual {
+    //     if (isBidOrder && lowestAsk != oldEdgePrice)
+    //         emit LowestLimitAskPriceChanged(lowestAsk, oldEdgePrice);
+    //     else if (!isBidOrder && highestBid != oldEdgePrice)
+    //         emit HighestLimitBidPriceChanged(highestBid, oldEdgePrice);
+    // }
 
     function _drawToOrderBook (
         address orderOwner,
@@ -204,8 +217,14 @@ contract OrderBookLinkedList is IOrderBook {
             }
             if (priceToPutBefore != 0) priceNode.nextPrice = priceToPutBefore;
             if (priceToPutAfter == 0) {
-                if (isBidOrder) highestBid = orderPrice;
-                else lowestAsk = orderPrice;
+                if (isBidOrder) {
+                    // TODO: (edgePriceEvent) emit HighestLimitBidPriceChanged(orderPrice, highestBid);
+                    highestBid = orderPrice;
+                }
+                else {
+                    // TODO: (edgePriceEvent) emit LowestLimitAskPriceChanged(orderPrice, lowestAsk);
+                    lowestAsk = orderPrice;
+                }
             }
             else priceNodes[securityContractAddr][priceToPutAfter].nextPrice = orderPrice;
         }
@@ -263,6 +282,8 @@ contract OrderBookLinkedList is IOrderBook {
             }
         }
         if (currentPrice.headOrderId == 0) {
+            if (orderPrice == lowestAsk) lowestAsk = currentPrice.nextPrice;
+            else if (orderPrice == highestBid) highestBid = currentPrice.nextPrice;
             delete priceNodes[securityContractAddr][orderPrice];
         }
         require(restAmount != amount, "No order to cancel");
