@@ -35,7 +35,7 @@ Deploy contracts:
 ```
 npx truffle migration
 ```
-If you want to create a token for security, create migrations/2_deploy_testSecurityToken (it's also gitignored) with the code below and do `npx truffle migrate` again:
+If you want to create a token for security, create migrations/2_deploy_testSecurityToken.js (it's also gitignored) with the code below and do `npx truffle migrate` again:
 ```
 var TestSecurityToken = artifacts.require("TestSecurityToken");
 
