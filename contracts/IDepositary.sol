@@ -8,12 +8,12 @@ enum UserValidationStatus { Invalid, Valid }
 
 interface IDepositary {
 
-    function changeSecurityContractValidationStatus (
+    function setSecurityContractValidationStatus (
         address securityContractAddr,
         SecurityContractValidationStatus status
     ) external;
     
-    function changeUserValidationStatus (
+    function setUserValidationStatus (
         address userAddr,
         UserValidationStatus status
     ) external;

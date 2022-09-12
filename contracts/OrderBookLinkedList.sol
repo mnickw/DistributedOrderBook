@@ -39,7 +39,6 @@ contract OrderBookLinkedList is IOrderBook {
         depositaryContract = IDepositary(depositaryAddr);
     }
 
-    // TODO: Cancel order
     // TODO: Approved order
     // TODO: Market order
 
@@ -57,8 +56,10 @@ contract OrderBookLinkedList is IOrderBook {
         uint32 amount,
         uint256 floorPrice
     ) external virtual override returns (PlaceOrderStatus) {
-        // TODO: Check by depo that `securityContractAddr` is valid
-        // TODO: Check by depo that `msg.sender` is valid
+        require(depositaryContract.getSecurityContractValidationStatus(securityContractAddr) == SecurityContractValidationStatus.Valid,
+            "Security contract address must be valid by depositary");
+        require(depositaryContract.getUserValidationStatus(msg.sender) == UserValidationStatus.Valid,
+            "Sender address must be valid by depositary");
         require(amount > 0, "Amount must be greater than 0");
         require(floorPrice > 0, "Floor price must be greater than 0");
         // TODO: Check overflow

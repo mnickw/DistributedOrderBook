@@ -17,10 +17,10 @@ describe("Depositary", function () {
     const invalidStatus = ethers.BigNumber.from("0");
     const validStatus = ethers.BigNumber.from("1");
 
-    depositary.changeSecurityContractValidationStatus(testSecurityToken.address, validStatus);
-    depositary.changeUserValidationStatus(owner.address, validStatus);
-    depositary.changeUserValidationStatus(validUserAccount1.address, validStatus);
-    depositary.changeUserValidationStatus(validUserAccount2.address, validStatus);
+    await depositary.setSecurityContractValidationStatus(testSecurityToken.address, validStatus);
+    await depositary.setUserValidationStatus(owner.address, validStatus);
+    await depositary.setUserValidationStatus(validUserAccount1.address, validStatus);
+    await depositary.setUserValidationStatus(validUserAccount2.address, validStatus);
 
     return { depositary, testSecurityToken, invalidStatus, validStatus,
         owner, validUserAccount1, validUserAccount2, invalidUserAccount };
@@ -50,11 +50,11 @@ describe("Depositary", function () {
     });
   });
 
-  describe("changeSecurityContractValidationStatus", function () {
+  describe("setSecurityContractValidationStatus", function () {
     describe("testSecurityToken.address, invalidStatus", function () {
-      it("Should change to invalid", async function () {
+      it("Should set to invalid", async function () {
         const { depositary, testSecurityToken, invalidStatus } = await loadFixture(deployContractsFixture);
-        await expect(depositary.changeSecurityContractValidationStatus(testSecurityToken.address, invalidStatus))
+        await expect(depositary.setSecurityContractValidationStatus(testSecurityToken.address, invalidStatus))
           .not.to.be.reverted;
         expect(await depositary.getSecurityContractValidationStatus(testSecurityToken.address))
           .to.equal(invalidStatus);
@@ -64,7 +64,7 @@ describe("Depositary", function () {
     describe("testSecurityToken.address, validStatus", function () {
       it("Should remain valid", async function () {
         const { depositary, testSecurityToken, validStatus } = await loadFixture(deployContractsFixture);
-        await expect(depositary.changeSecurityContractValidationStatus(testSecurityToken.address, validStatus))
+        await expect(depositary.setSecurityContractValidationStatus(testSecurityToken.address, validStatus))
           .not.to.be.reverted;
         expect(await depositary.getSecurityContractValidationStatus(testSecurityToken.address))
           .to.equal(validStatus);
@@ -74,7 +74,7 @@ describe("Depositary", function () {
     describe("depository.address, invalidStatus", function () {
       it("Should remain invalid", async function () {
         const { depositary, testSecurityToken, invalidStatus } = await loadFixture(deployContractsFixture);
-        await expect(depositary.changeSecurityContractValidationStatus(depositary.address, invalidStatus))
+        await expect(depositary.setSecurityContractValidationStatus(depositary.address, invalidStatus))
           .not.to.be.reverted;
         expect(await depositary.getSecurityContractValidationStatus(depositary.address))
           .to.equal(invalidStatus);
@@ -82,11 +82,11 @@ describe("Depositary", function () {
     });
   });
 
-  describe("changeUserValidationStatus", function () {
+  describe("setUserValidationStatus", function () {
     describe("validUserAccount1.address, invalidStatus", function () {
-      it("Should change to invalid", async function () {
+      it("Should set to invalid", async function () {
         const { depositary, validUserAccount1, invalidStatus } = await loadFixture(deployContractsFixture);
-        await expect(depositary.changeUserValidationStatus(validUserAccount1.address, invalidStatus))
+        await expect(depositary.setUserValidationStatus(validUserAccount1.address, invalidStatus))
           .not.to.be.reverted;
         expect(await depositary.getUserValidationStatus(validUserAccount1.address))
           .to.equal(invalidStatus);
@@ -96,7 +96,7 @@ describe("Depositary", function () {
     describe("validUserAccount1.address, validStatus", function () {
       it("Should remain valid", async function () {
         const { depositary, validUserAccount1, validStatus } = await loadFixture(deployContractsFixture);
-        await expect(depositary.changeUserValidationStatus(validUserAccount1.address, validStatus))
+        await expect(depositary.setUserValidationStatus(validUserAccount1.address, validStatus))
           .not.to.be.reverted;
         expect(await depositary.getUserValidationStatus(validUserAccount1.address))
           .to.equal(validStatus);
@@ -106,7 +106,7 @@ describe("Depositary", function () {
     describe("invalidUserAccount.address, invalidStatus", function () {
       it("Should remain invalid", async function () {
         const { depositary, invalidUserAccount, invalidStatus } = await loadFixture(deployContractsFixture);
-        await expect(depositary.changeUserValidationStatus(invalidUserAccount.address, invalidStatus))
+        await expect(depositary.setUserValidationStatus(invalidUserAccount.address, invalidStatus))
           .not.to.be.reverted;
         expect(await depositary.getUserValidationStatus(invalidUserAccount.address))
           .to.equal(invalidStatus);

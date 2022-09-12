@@ -6,6 +6,8 @@ interface IOrderBook {
 
     event ExecuteTrade (address indexed securityContractAddr, address indexed bidder, address indexed asker, uint32 amount, uint256 price);
     event DrawToOrderBook (address indexed securityContractAddr, address indexed owner, bool indexed isBidOrder, uint32 amount, uint256 price);
+    //event PlaceLimitAskOrder (PlaceOrderStatus indexed status);
+    //event PlaceLimitBidOrder (PlaceOrderStatus indexed status);
     // TODO: (edgePriceEvent) event LowestLimitAskPriceChanged(uint256 indexed newPrice, uint256 indexed oldPrice);
     // TODO: (edgePriceEvent) event HighestLimitBidPriceChanged(uint256 indexed newPrice, uint256 indexed oldPrice);
 

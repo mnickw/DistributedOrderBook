@@ -8,14 +8,14 @@ contract Depositary is IDepositary, Ownable {
     mapping(address => SecurityContractValidationStatus) internal securityContractValidations;
     mapping(address => UserValidationStatus) internal userValidationStatus;
 
-    function changeSecurityContractValidationStatus (
+    function setSecurityContractValidationStatus (
         address securityContractAddr,
         SecurityContractValidationStatus status
     ) external virtual override onlyOwner{
         securityContractValidations[securityContractAddr] = status;
     }
     
-    function changeUserValidationStatus (
+    function setUserValidationStatus (
         address userAddr,
         UserValidationStatus status
     ) external virtual override onlyOwner {
